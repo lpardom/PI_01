@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from datetime import datetime
 import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = FastAPI()
 
@@ -40,38 +43,48 @@ def cantidad_filmaciones_dia(dia: str):
     return {"message": f"{count} cantidad de películas fueron estrenadas en los días {dia}"}
 
 @app.get("/score_titulo/{titulo}")
-def score_titulo(titulo: str):
-    film = movies_data[movies_data["original_title"].str.lower() == titulo.lower()]
-
-    if film.empty:
-        return {"error": "Película no encontrada"}
-
-    film = film.iloc[0]
-    return {
-        "titulo": film["original_title"],
-        "año": film["release_year"],
-        "score": film["popularity"]
-    }
+def score_titulo(titulo_de_la_filmacion):
+    # Filtrar la película por el título, ignorando mayúsculas y minúsculas
+    filtro = movies_data['title'].str.lower() == titulo_de_la_filmacion.lower()
+    pelicula = movies_data.loc[filtro]
+    
+    # Verificar si se encontró la película
+    if pelicula.empty:
+        return f"La película '{titulo_de_la_filmacion}' no fue encontrada."
+    
+    # Obtener los datos de la película
+    pelicula = pelicula.iloc[0]  # Seleccionar la primera coincidencia
+    titulo = pelicula['title']
+    anio = pelicula['release_year']
+    score = pelicula['popularity']
+    
+    # Formatear el mensaje de retorno
+    return f"La película '{titulo}' fue estrenada en el año {anio} con un score/popularidad de {score:.2f}"
 
 @app.get("/votos_titulo/{titulo}")
-def votos_titulo(titulo: str):
-    film = movies_data[movies_data["original_title"].str.lower() == titulo.lower()]
-
-    if film.empty:
-        return {"error": "Película no encontrada"}
-
-    film = film.iloc[0]
-    vote_count = film["vote_count"]
-
-    if vote_count < 2000:
-        return {"message": "La película no cumple con el mínimo de 2000 valoraciones"}
-
-    return {
-        "titulo": film["original_title"],
-        "año": film["release_year"],
-        "total_votos": vote_count,
-        "promedio_votos": film["vote_average"]
-    }
+def votos_titulo(titulo_de_la_filmacion):
+    # Filtrar la película por el título, ignorando mayúsculas y minúsculas
+    filtro = movies_data['title'].str.lower() == titulo_de_la_filmacion.lower()
+    pelicula = movies_data.loc[filtro]
+    
+    # Verificar si se encontró la película
+    if pelicula.empty:
+        return f"La película '{titulo_de_la_filmacion}' no fue encontrada."
+    
+    # Obtener los datos de la película
+    pelicula = pelicula.iloc[0]  # Seleccionar la primera coincidencia
+    titulo = pelicula['title']
+    anio = pelicula['release_year']
+    votos = pelicula['vote_count']
+    promedio_votos = pelicula['vote_average']
+    
+    # Verificar si cumple con el mínimo de votos
+    if votos < 2000:
+        return f"La película '{titulo}' no cumple con el mínimo de 2000 valoraciones (tiene {votos} votos)."
+    
+    # Formatear el mensaje de retorno
+    return (f"La película '{titulo}' fue estrenada en el año {anio}. "
+            f"La misma cuenta con un total de {votos} valoraciones, con un promedio de {promedio_votos:.2f}.")
 
 @app.get("/get_actor/{nombre_actor}")
 def get_actor(nombre_actor: str):
@@ -92,24 +105,61 @@ def get_actor(nombre_actor: str):
     }
 
 @app.get("/get_director/{nombre_director}")
-def get_director(nombre_director: str):
-    director_data = movies_data[movies_data["director"].str.contains(nombre_director, case=False, na=False)]
+def get_director(nombre_director):
+    # Filtrar las películas dirigidas por el director (ignorando mayúsculas y minúsculas)
+    filtro = movies_data['director'].str.contains(nombre_director, case=False, na=False)
+    peliculas = movies_data.loc[filtro]
+    
+    # Verificar si se encontró el director
+    if peliculas.empty:
+        return f"El director '{nombre_director}' no fue encontrado o no tiene películas en el dataset."
+    
+    # Calcular el retorno total y organizar los detalles de las películas
+    total_retorno = peliculas['return'].sum()
+    detalles_peliculas = []
+    
+    for _, pelicula in peliculas.iterrows():
+        titulo = pelicula['title']
+        fecha_lanzamiento = pelicula['release_date']
+        retorno_individual = pelicula['return']
+        costo = pelicula['budget']
+        ganancia = pelicula['revenue'] - costo if not pd.isna(pelicula['revenue']) else -costo  # Ganancia puede ser negativa si no hay ingresos
 
-    if director_data.empty:
-        return {"error": "Director no encontrado"}
-
-    films = []
-    for _, row in director_data.iterrows():
-        films.append({
-            "titulo": row["original_title"],
-            "fecha_lanzamiento": row["release_date"].strftime('%Y-%m-%d'),
-            "retorno_individual": row["return"],
-            "costo": row["budget"],
-            "ganancia": row["revenue"] - row["budget"]
+        detalles_peliculas.append({
+            "titulo": titulo,
+            "fecha_lanzamiento": fecha_lanzamiento,
+            "retorno_individual": round(retorno_individual, 2) if not pd.isna(retorno_individual) else None,
+            "costo": costo,
+            "ganancia": ganancia
         })
-
+    
+    # Formatear el mensaje de retorno
     return {
         "director": nombre_director,
-        "cantidad_peliculas": director_data.shape[0],
-        "peliculas": films
+        "retorno_total": round(total_retorno, 2),
+        "peliculas": detalles_peliculas
     }
+
+    # Preprocesamiento para el sistema de recomendación
+def preprocess_data(df):
+    df['combined_features'] = df['title'] + " " + df['genre_names'] + " " + df['overview']
+    return df
+
+# Crear matriz de similitud
+def create_similarity_matrix(df):
+    count_vectorizer = CountVectorizer(stop_words='english')
+    count_matrix = count_vectorizer.fit_transform(df['combined_features'])
+    similarity_matrix = cosine_similarity(count_matrix, count_matrix)
+    return similarity_matrix
+
+# Función de recomendación
+def recomendacion(titulo, df, similarity_matrix):
+    if titulo not in df['title'].values:
+        return ["Película no encontrada"]
+
+    movie_index = df[df['title'] == titulo].index[0]
+    similarity_scores = list(enumerate(similarity_matrix[movie_index]))
+    sorted_movies = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+    recommended_indices = [movie[0] for movie in sorted_movies[1:6]]
+    recommended_titles = df['title'].iloc[recommended_indices].tolist()
+    return recommended_titles

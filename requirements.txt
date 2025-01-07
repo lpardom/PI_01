@@ -1,0 +1,9 @@
+pandas
+ast
+numpy
+matplotlib
+scipy
+fastapi
+datetime
+uvicorn
+scikit-learn

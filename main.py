@@ -1,15 +1,12 @@
-import os
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8000))  # Usa el puerto especificado por Render o 8000 por defecto
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
-
 from fastapi import FastAPI
 from datetime import datetime
 import pandas as pd
 
 app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello, Render!"}
 
 # Cargar el dataset
 movies_data = pd.read_csv("movies.csv")

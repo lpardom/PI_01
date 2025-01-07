@@ -4,10 +4,6 @@ import pandas as pd
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello, Render!"}
-
 # Cargar el dataset
 movies_data = pd.read_csv("movies.csv")
 

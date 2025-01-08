@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 # Cargar el dataset
-# movies_data = pd.read_csv("movies.csv")
+movies_data = pd.read_csv("movies.csv", nrows=1000)
 
 # Preprocesamiento: combinar información relevante en una sola columna para similitud
 def preprocess_data(df):
@@ -15,40 +15,6 @@ def preprocess_data(df):
         df['tagline'].fillna('')
     )
     return df
-
-movies_data = pd.DataFrame({
-    "title": ["Toy Story", "Jumanji", "Grumpier Old Men"],
-    "genre_names": ["Animation, Comedy, Family", "Adventure, Fantasy, Family", "Comedy, Romance"],
-    "overview": [
-        "A story about toys coming to life.",
-        "A magical board game unleashes adventure.",
-        "A continuation of a comedic love story."
-    ],
-    "tagline": [
-        "The adventure takes off!",
-        "Roll the dice and unleash the excitement!",
-        "Still yummy after all these years."
-    ],
-    "release_date": pd.to_datetime(["1995-11-22", "1995-12-15", "1995-12-22"]),
-    "release_year": [1995, 1995, 1995],
-    "popularity": [21.95, 17.02, 3.85],
-    "vote_count": [5415, 2413, 34],
-    "vote_average": [8.0, 7.5, 6.2],
-    "actor_names": [
-        "Tom Hanks, Tim Allen, Don Rickles",
-        "Robin Williams, Kirsten Dunst, Jonathan Hyde",
-        "Jack Lemmon, Walter Matthau, Ann-Margret"
-    ],
-    "director": ["John Lasseter", "Joe Johnston", "Howard Deutch"],
-    "budget": [30000000.0, 65000000.0, 16000000.0],
-    "revenue": [373554033.0, 262797249.0, 81452156.0],
-    "return": [12.45, 4.04, 5.09],
-    "combined_features": [
-        "Animation Comedy Family A story about toys coming to life. The adventure takes off!",
-        "Adventure Fantasy Family A magical board game unleashes adventure. Roll the dice and unleash the excitement!",
-        "Comedy Romance A continuation of a comedic love story. Still yummy after all these years."
-    ]
-})
 
 movies_df = preprocess_data(movies_data)
 
@@ -103,9 +69,6 @@ months_es = {
 
 @app.get("/cantidad_filmaciones_mes/{mes}")
 def cantidad_filmaciones_mes(mes: str):
-    columns_to_load = ['release_date']
-    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)     
-
     mes = mes.lower()
     if mes not in months_es:
         return {"error": "Mes no válido"}
@@ -117,8 +80,6 @@ def cantidad_filmaciones_mes(mes: str):
 
 @app.get("/cantidad_filmaciones_dia/{dia}")
 def cantidad_filmaciones_dia(dia: str):
-    columns_to_load = ['release_date']
-    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
     dia = dia.lower()
     if dia not in days_es:
         return {"error": "Día no válido"}
@@ -130,8 +91,6 @@ def cantidad_filmaciones_dia(dia: str):
 
 @app.get("/score_titulo/{titulo}")
 def score_titulo(titulo_de_la_filmacion):
-    columns_to_load = ['title','release_year','popularity']
-    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
     # Filtrar la película por el título, ignorando mayúsculas y minúsculas
     filtro = movies_data['title'].str.lower() == titulo_de_la_filmacion.lower()
     pelicula = movies_data.loc[filtro]
@@ -151,9 +110,6 @@ def score_titulo(titulo_de_la_filmacion):
 
 @app.get("/votos_titulo/{titulo}")
 def votos_titulo(titulo_de_la_filmacion):
-    columns_to_load = ['title','release_year','popularity','vote_count','vote_average']
-    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
-
     # Filtrar la película por el título, ignorando mayúsculas y minúsculas
     filtro = movies_data['title'].str.lower() == titulo_de_la_filmacion.lower()
     pelicula = movies_data.loc[filtro]
@@ -179,9 +135,6 @@ def votos_titulo(titulo_de_la_filmacion):
 
 @app.get("/get_actor/{nombre_actor}")
 def get_actor(nombre_actor: str):
-    columns_to_load = ['actor_names','return','title']
-    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
-
     actor_data = movies_data[movies_data["actor_names"].str.contains(nombre_actor, case=False, na=False)]
 
     if actor_data.empty:
@@ -200,9 +153,6 @@ def get_actor(nombre_actor: str):
 
 @app.get("/get_director/{nombre_director}")
 def get_director(nombre_director):
-    columns_to_load = ['director','title','release_date','return','budget','revenue']
-    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
-
     # Filtrar las películas dirigidas por el director (ignorando mayúsculas y minúsculas)
     filtro = movies_data['director'].str.contains(nombre_director, case=False, na=False)
     peliculas = movies_data.loc[filtro]
@@ -239,7 +189,5 @@ def get_director(nombre_director):
 
 @app.get("/recomendacion/{titulo}")
 def get_recomendacion(titulo: str):
-        columns_to_load = ['title', 'genre_names', 'overview', 'tagline']
-        movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
-        # movies_data = pd.read_csv("movies.csv")
-        return {"recomendaciones": recomendacion(titulo)}
+
+    return {"recomendaciones": recomendacion(titulo)}

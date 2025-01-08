@@ -16,7 +16,23 @@ def preprocess_data(df):
     )
     return df
 
-movies_data = pd.DataFrame()
+movies_data = pd.DataFrame({
+    "title": pd.Series(dtype="str"),
+    "genre_names": pd.Series(dtype="str"),
+    "overview": pd.Series(dtype="str"),
+    "tagline": pd.Series(dtype="str"),
+    "release_date": pd.Series(dtype="datetime64[ns]"),
+    "release_year": pd.Series(dtype="int"),
+    "popularity": pd.Series(dtype="float"),
+    "vote_count": pd.Series(dtype="int"),
+    "vote_average": pd.Series(dtype="float"),
+    "actor_names": pd.Series(dtype="str"),
+    "director": pd.Series(dtype="str"),
+    "budget": pd.Series(dtype="float"),
+    "revenue": pd.Series(dtype="float"),
+    "return": pd.Series(dtype="float"),
+    "combined_features": pd.Series(dtype="str")  # Para la similitud de coseno
+})
 
 movies_df = preprocess_data(movies_data)
 

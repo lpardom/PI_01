@@ -16,7 +16,7 @@ def preprocess_data(df):
     )
     return df
 
-movies_data = ""
+movies_data = pd.DataFrame()
 
 movies_df = preprocess_data(movies_data)
 

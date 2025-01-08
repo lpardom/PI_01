@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 # Cargar el dataset
-movies_data = pd.read_csv("movies.csv")
+# movies_data = pd.read_csv("movies.csv")
 
 # Preprocesamiento: combinar información relevante en una sola columna para similitud
 def preprocess_data(df):
@@ -15,6 +15,8 @@ def preprocess_data(df):
         df['tagline'].fillna('')
     )
     return df
+
+movies_data = ""
 
 movies_df = preprocess_data(movies_data)
 
@@ -69,6 +71,9 @@ months_es = {
 
 @app.get("/cantidad_filmaciones_mes/{mes}")
 def cantidad_filmaciones_mes(mes: str):
+    columns_to_load = ['release_date']
+    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)     
+
     mes = mes.lower()
     if mes not in months_es:
         return {"error": "Mes no válido"}
@@ -80,6 +85,8 @@ def cantidad_filmaciones_mes(mes: str):
 
 @app.get("/cantidad_filmaciones_dia/{dia}")
 def cantidad_filmaciones_dia(dia: str):
+    columns_to_load = ['release_date']
+    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
     dia = dia.lower()
     if dia not in days_es:
         return {"error": "Día no válido"}
@@ -91,6 +98,8 @@ def cantidad_filmaciones_dia(dia: str):
 
 @app.get("/score_titulo/{titulo}")
 def score_titulo(titulo_de_la_filmacion):
+    columns_to_load = ['title','release_year','popularity']
+    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
     # Filtrar la película por el título, ignorando mayúsculas y minúsculas
     filtro = movies_data['title'].str.lower() == titulo_de_la_filmacion.lower()
     pelicula = movies_data.loc[filtro]
@@ -110,6 +119,9 @@ def score_titulo(titulo_de_la_filmacion):
 
 @app.get("/votos_titulo/{titulo}")
 def votos_titulo(titulo_de_la_filmacion):
+    columns_to_load = ['title','release_year','popularity','vote_count','vote_average']
+    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
+
     # Filtrar la película por el título, ignorando mayúsculas y minúsculas
     filtro = movies_data['title'].str.lower() == titulo_de_la_filmacion.lower()
     pelicula = movies_data.loc[filtro]
@@ -135,6 +147,9 @@ def votos_titulo(titulo_de_la_filmacion):
 
 @app.get("/get_actor/{nombre_actor}")
 def get_actor(nombre_actor: str):
+    columns_to_load = ['actor_names','return','title']
+    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
+
     actor_data = movies_data[movies_data["actor_names"].str.contains(nombre_actor, case=False, na=False)]
 
     if actor_data.empty:
@@ -153,6 +168,9 @@ def get_actor(nombre_actor: str):
 
 @app.get("/get_director/{nombre_director}")
 def get_director(nombre_director):
+    columns_to_load = ['director','title','release_date','return','budget','revenue']
+    movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
+
     # Filtrar las películas dirigidas por el director (ignorando mayúsculas y minúsculas)
     filtro = movies_data['director'].str.contains(nombre_director, case=False, na=False)
     peliculas = movies_data.loc[filtro]
@@ -189,4 +207,7 @@ def get_director(nombre_director):
 
 @app.get("/recomendacion/{titulo}")
 def get_recomendacion(titulo: str):
+        columns_to_load = ['title', 'genre_names', 'overview', 'tagline']
+        movies_data = pd.read_csv("movies.csv", usecols=columns_to_load)
+        # movies_data = pd.read_csv("movies.csv")
         return {"recomendaciones": recomendacion(titulo)}

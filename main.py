@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 # Cargar el dataset
-movies_data = pd.read_csv("movies.csv", nrows=1000)
+movies_data = pd.read_csv("movies.csv", nrows=5000)
 
 # Preprocesamiento: combinar información relevante en una sola columna para similitud
 def preprocess_data(df):

@@ -35,7 +35,7 @@ Se creó una API con las siguientes funcionalidades:
 3. **`/score_titulo/{titulo}`**: Devuelve el título, año de estreno y popularidad de una película.
 4. **`/votos_titulo/{titulo}`**: Devuelve el título, número de votos y promedio de votos de una película, considerando un mínimo de 2000 votos.
 5. **`/get_actor/{nombre_actor}`**: Devuelve el éxito de un actor, incluyendo cantidad de películas, retorno total y promedio por filmación.
-6. **`/get_director/{nombre_director}`**: Devuelve el éxito de un director, incluyendo detalles como retorno total, películas dirigidas y ganancia por filmación.
+6. **`/get_director/{nombre_director}`**: Devuelve el éxito de un director, incluyendo detalles como retorno total, películas dirigidas, costo y ganancia por filmación.
 7. **`/recomendacion/{titulo}`**: Devuelve una lista de 5 películas similares a la ingresada, basada en un modelo de similitud.
 
 ### 3. **Entrenamiento del Sistema de Recomendación**

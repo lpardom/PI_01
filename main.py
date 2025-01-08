@@ -17,21 +17,37 @@ def preprocess_data(df):
     return df
 
 movies_data = pd.DataFrame({
-    "title": pd.Series(dtype="str"),
-    "genre_names": pd.Series(dtype="str"),
-    "overview": pd.Series(dtype="str"),
-    "tagline": pd.Series(dtype="str"),
-    "release_date": pd.Series(dtype="datetime64[ns]"),
-    "release_year": pd.Series(dtype="int"),
-    "popularity": pd.Series(dtype="float"),
-    "vote_count": pd.Series(dtype="int"),
-    "vote_average": pd.Series(dtype="float"),
-    "actor_names": pd.Series(dtype="str"),
-    "director": pd.Series(dtype="str"),
-    "budget": pd.Series(dtype="float"),
-    "revenue": pd.Series(dtype="float"),
-    "return": pd.Series(dtype="float"),
-    "combined_features": pd.Series(dtype="str")  # Para la similitud de coseno
+    "title": ["Toy Story", "Jumanji", "Grumpier Old Men"],
+    "genre_names": ["Animation, Comedy, Family", "Adventure, Fantasy, Family", "Comedy, Romance"],
+    "overview": [
+        "A story about toys coming to life.",
+        "A magical board game unleashes adventure.",
+        "A continuation of a comedic love story."
+    ],
+    "tagline": [
+        "The adventure takes off!",
+        "Roll the dice and unleash the excitement!",
+        "Still yummy after all these years."
+    ],
+    "release_date": pd.to_datetime(["1995-11-22", "1995-12-15", "1995-12-22"]),
+    "release_year": [1995, 1995, 1995],
+    "popularity": [21.95, 17.02, 3.85],
+    "vote_count": [5415, 2413, 34],
+    "vote_average": [8.0, 7.5, 6.2],
+    "actor_names": [
+        "Tom Hanks, Tim Allen, Don Rickles",
+        "Robin Williams, Kirsten Dunst, Jonathan Hyde",
+        "Jack Lemmon, Walter Matthau, Ann-Margret"
+    ],
+    "director": ["John Lasseter", "Joe Johnston", "Howard Deutch"],
+    "budget": [30000000.0, 65000000.0, 16000000.0],
+    "revenue": [373554033.0, 262797249.0, 81452156.0],
+    "return": [12.45, 4.04, 5.09],
+    "combined_features": [
+        "Animation Comedy Family A story about toys coming to life. The adventure takes off!",
+        "Adventure Fantasy Family A magical board game unleashes adventure. Roll the dice and unleash the excitement!",
+        "Comedy Romance A continuation of a comedic love story. Still yummy after all these years."
+    ]
 })
 
 movies_df = preprocess_data(movies_data)

@@ -4,12 +4,59 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-app = FastAPI()
-
 # Cargar el dataset
 movies_data = pd.read_csv("movies.csv")
 
+# Preprocesamiento: combinar información relevante en una sola columna para similitud
+def preprocess_data(df):
+    df['combined_features'] = (
+        df['genre_names'].fillna('') + " " +
+        df['overview'].fillna('') + " " +
+        df['tagline'].fillna('')
+    )
+    return df
+
+movies_df = preprocess_data(movies_data)
+
+# Construcción de la matriz de características de texto
+count_vectorizer = CountVectorizer(stop_words='english')
+feature_matrix = count_vectorizer.fit_transform(movies_df['combined_features'])
+
+# Calcular la similitud de coseno
+cosine_sim = cosine_similarity(feature_matrix, feature_matrix)
+
+# Función de recomendación
+def recomendacion(titulo):
+    # Convertir el título ingresado a minúsculas
+    titulo = titulo.lower()
+
+    # Crear una columna temporal con títulos en minúsculas para comparación
+    movies_data['title_lower'] = movies_data['title'].str.lower()
+
+    # Verificar si el título existe en la base de datos
+    if titulo not in movies_data['title_lower'].values:
+        return ["La película no fue encontrada en la base de datos"]
+
+    # Encontrar el índice de la película según el título en minúsculas
+    idx = movies_data[movies_data['title_lower'] == titulo].index[0]
+
+    # Obtener las puntuaciones de similitud de la película con todas las demás
+    sim_scores = list(enumerate(cosine_sim[idx]))
+
+    # Ordenar por puntuación de similitud, excluyendo la misma película
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:6]  # Top 5 similares
+
+    # Obtener los títulos de las películas recomendadas
+    recommended_movies = [movies_df.iloc[i[0]]['title'] for i in sim_scores]
+    
+    # Eliminar la columna temporal para no afectar los datos originales
+    movies_data.drop(columns=['title_lower'], inplace=True)
+    
+    return recommended_movies
+
+
+app = FastAPI()
 # Convertir las fechas de lanzamiento a un formato datetime
 movies_data["release_date"] = pd.to_datetime(movies_data["release_date"], errors="coerce")
 
@@ -140,26 +187,6 @@ def get_director(nombre_director):
         "peliculas": detalles_peliculas
     }
 
-    # Preprocesamiento para el sistema de recomendación
-def preprocess_data(df):
-    df['combined_features'] = df['title'] + " " + df['genre_names'] + " " + df['overview']
-    return df
-
-# Crear matriz de similitud
-def create_similarity_matrix(df):
-    count_vectorizer = CountVectorizer(stop_words='english')
-    count_matrix = count_vectorizer.fit_transform(df['combined_features'])
-    similarity_matrix = cosine_similarity(count_matrix, count_matrix)
-    return similarity_matrix
-
-# Función de recomendación
-def recomendacion(titulo, df, similarity_matrix):
-    if titulo not in df['title'].values:
-        return ["Película no encontrada"]
-
-    movie_index = df[df['title'] == titulo].index[0]
-    similarity_scores = list(enumerate(similarity_matrix[movie_index]))
-    sorted_movies = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
-    recommended_indices = [movie[0] for movie in sorted_movies[1:6]]
-    recommended_titles = df['title'].iloc[recommended_indices].tolist()
-    return recommended_titles
+@app.get("/recomendacion/{titulo}")
+def get_recomendacion(titulo: str):
+        return {"recomendaciones": recomendacion(titulo)}
